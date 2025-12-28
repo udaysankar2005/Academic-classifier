@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Academic Abstract Classifier</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+
+<body>
+  <header class="banner">
+    <h1>Academic Abstract Classifier</h1>
+    <p>Automatically classify research abstracts into academic fields</p>
+  </header>
+
+  <main class="container">
+    <div class="card">
+      <h2>Paste Your Abstract Below</h2>
+
+      <textarea id="text" placeholder="Enter or paste your academic abstract here..."></textarea>
+
+      <div class="btn-group">
+        <button class="btn classify" onclick="classify()">Classify</button>
+        <button class="btn clear" onclick="clearText()">Clear</button>
+      </div>
+
+      <div id="result" class="result hidden">
+        <h3 id="pred-label"></h3>
+
+        <div class="confidence-bar">
+          <div id="confidence-fill" class="fill"></div>
+        </div>
+
+        <p id="confidence-text"></p>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>© 2025 Academic Classifier — Powered by Transformers</p>
+  </footer>
+
+  <script>
+    async function classify() {
+      const text = document.getElementById("text").value.trim();
+      if (!text) {
+        alert("Please enter an abstract!");
+        return;
+      }
+
+      const button = document.querySelector(".classify");
+      button.disabled = true;
+      button.innerText = "Classifying...";
+
+      document.getElementById("result").classList.add("hidden");
+
+      try {
+        const res = await fetch("/predict", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text }),
+        });
+
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+
+        const label = data.label;
+        const confidence = data.confidence;
+
+        document.getElementById("pred-label").innerText =
+          "Predicted Field: " + label;
+
+        document.getElementById("confidence-text").innerText =
+          "Confidence: " + confidence + "%";
+
+        const fill = document.getElementById("confidence-fill");
+        fill.style.width = confidence + "%";
+        fill.style.background = "#4caf50";
+
+        document.getElementById("result").classList.remove("hidden");
+
+      } catch (error) {
+        alert("Error: " + error.message);
+      }
+
+      button.disabled = false;
+      button.innerText = "Classify";
+    }
+
+    function clearText() {
+      document.getElementById("text").value = "";
+      document.getElementById("result").classList.add("hidden");
+    }
+  </script>
+
+</body>
+</html>
